@@ -1,40 +1,52 @@
 <template>
     <div>
         <h1>Sign Up</h1>
-        <label for="username">Username</label>
-        <input id="username" />
+        <form>
+            <label for="username">Username</label>
+            <input id="username" v-model="username">
 
-        <label for="e-mail">E-mail</label>
-        <input id="e-mail">
+            <label for="e-mail">E-mail</label>
+            <input id="e-mail" v-model="email">
 
-        <label for="password">Password</label>
-        <input id="password" type="password" v-on:input="onChangePassword">
+            <label for="password">Password</label>
+            <input id="password" type="password" v-model="password">
 
-        <label for="password-repeat">Password-Repeat</label>
-        <input id="password-repeat" type="password" v-on:input="onChangePasswordRepeat">
+            <label for="password-repeat">Password-Repeat</label>
+            <input id="password-repeat" type="password" v-model="passwordRepeat">
 
-        <button v-bind:disabled="disabled">Sign Up</button>
+            <button :disabled="isDisabled" @click.prevent="submit">Sign Up</button>
+        </form>
     </div>
 </template>
 <script>
+import axios from 'axios'
 export default {
     name: "SignUpPage",
     data(){
         return{
-            disabled: false,
+            username: '',
+            email: '',
             password: '',
-            passwordRepeat: ''
+            passwordRepeat: '',
         }
     },
-    methods: {
-        onChangePassword(event){
-            this.password = event.target.value
-            this.disabled = this.password !== this.passwordRepeat
-        },
-        onChangePasswordRepeat(event){
-            this.passwordRepeat = event.target.value
-            this.disabled = this.password !== this.passwordRepeat
+    computed:{
+        isDisabled(){
+            return this.password && this.passwordRepeat ? this.password !== this.passwordRepeat : true
+        }
+    },
+    methods:{
+        submit(){
+            const config = {
+                headers: {'content-type': "application/json"}
+            }
+            axios.post('/api/1.0/users', {
+                username: this.username,
+                email: this.email,
+                password: this.password
+            },config)
         }
     }
+
 }
 </script>

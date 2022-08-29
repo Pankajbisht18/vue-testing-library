@@ -2,6 +2,9 @@ import SignUpPage from './SignUp.vue';
 import { render, screen } from '@testing-library/vue';
 import "@testing-library/jest-dom";
 import userEvent from '@testing-library/user-event'
+import axios from 'axios';
+import { setupServer } from 'msw/node';
+import { rest } from 'msw';
 
 describe("Sign Up Page", () => {
     describe("Layout", () => {
@@ -42,24 +45,61 @@ describe("Sign Up Page", () => {
         })
         it("has Sign Up Button", () => {
             render(SignUpPage);
-            const Button = screen.queryByRole("button", { name: "Sign Up" });
-            expect(Button).toBeInTheDocument();
+            const button = screen.queryByRole("button", { name: "Sign Up" });
+            expect(button).toBeInTheDocument();
         });
-        it("has Sign Up Button disabled", () => {
+        it("disables the button initially", () => {
             render(SignUpPage);
-            const Button = screen.queryByRole("button", { name: "Sign Up" });
-            expect(Button).toBeDisabled();
+            const button = screen.queryByRole("button", { name: "Sign Up" });
+            expect(button).toBeDisabled();
         });
     });
     describe('Interactions', () => {
         it("enables the button when the password and password repeat fileds have same value", async () => {
             render(SignUpPage);
-            const passwordInput = screen.queryAllByLabelText("Password");
-            const passwordRepeatInput = screen.queryAllByLabelText("password Repeat");
-            await userEvent.type(passwordInput, "Password");
-            await userEvent.type(passwordRepeatInput, "Password");
-            const button = screen.queryAllByRole("button", {name: "Sign Up"});
-            expect(button).toBeDisabled();
-        })
+            const passwordInput = screen.queryByLabelText("Password");
+            const passwordRepeatInput = screen.queryByLabelText("Password-Repeat");
+            await userEvent.type(passwordInput, "P4ssword");
+            await userEvent.type(passwordRepeatInput, "P4ssword");
+            const button = screen.queryByRole("button", {name: "Sign Up"});
+            expect(button).toBeEnabled();
+        });
+        it("sends username, email and password to backend after clicking the button", async () => {
+            let requestBody;
+            const server = setupServer(
+                rest.post("/api/1.0/users/", (req, res, ctx) => {
+                    console.log(req)
+                    requestBody = req.bodyUsed;
+                    return res(ctx.status(200));
+                })
+            );
+            server.listen();
+            render(SignUpPage);
+            const usernameInput = screen.queryByLabelText("Username");
+            const emailInput = screen.queryByLabelText("E-mail");
+            const passwordInput = screen.queryByLabelText("Password");
+            const passwordRepeatInput = screen.queryByLabelText("Password-Repeat");
+            await userEvent.type(usernameInput, "user1");
+            await userEvent.type(emailInput, "user1@gmail.com");
+            await userEvent.type(passwordInput, "P4ssword");
+            await userEvent.type(passwordRepeatInput, "P4ssword");
+            const button = screen.queryByRole("button", {name: "Sign Up"});
+
+            // const mockFn = jest.fn();
+            // axios.post = mockFn;
+
+            await userEvent.click(button);
+
+            await server.close();
+
+            // const firstCall = mockFn.mock.calls[0]
+            // const body = firstCall[1]
+
+            expect(requestBody).toEqual({
+                username: 'user1',
+                email: "user1@gmail.com",
+                password: "P4ssword",
+            })
+        });
     })
 })
