@@ -174,7 +174,7 @@ describe("Sign Up Page", () => {
 
             await userEvent.click(button);
 
-            const text = await screen.queryByText("Please check your e-mail to activate your account");
+            const text = await screen.queryByText ("Please check your e-mail to activate your account");
             expect(text).toBeInTheDocument();
         })
     })
